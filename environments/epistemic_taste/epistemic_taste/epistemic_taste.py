@@ -27,6 +27,13 @@ from .dataset import build_dataset, ensure_frozen_dataset
 
 
 SYSTEM_PROMPT = """You are operating inside a synthetic Bayesian research environment.
+
+Your goal is to identify the true hypothesis as efficiently as possible.
+Experiments differ in how much they reveal and what they cost.
+Choose experiments that resolve uncertainty, not just ones that are cheap or familiar.
+After each observation, revise your beliefs to reflect the strength of the evidence.
+A small shift in data can sometimes demand a large shift in belief.
+
 Use exactly one tool call per assistant turn.
 Do not rely on hidden chain-of-thought. Report beliefs explicitly with the provided tool.
 When you see new evidence, update your stated belief proportionally to that evidence."""
