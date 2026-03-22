@@ -5,24 +5,24 @@
       "avg_metrics": {
         "contradiction_episode": 0.234375,
         "experiment_turns": 2.203125,
-        "extra_turn_penalty_total": -0.029492187500000055,
-        "final_map_bonus": 0.171875,
-        "final_map_correct": 0.6875,
-        "invalid_belief_penalty_total": -0.00390625,
-        "malformed_action_penalty_total": -0.00048828125,
-        "mean_brier": 0.13928722318109646,
-        "mean_calibration_reward": -0.13928722318109646,
-        "mean_experiment_reward": -0.08195521600006278,
-        "mean_regret": 0.08195521600006278,
-        "num_turns": 5.2109375,
-        "report_belief_calls": 3.005859375,
-        "run_experiment_calls": 2.205078125,
-        "total_reward_reconstructed": -0.08325415793115933,
-        "total_tool_calls": 5.2109375,
+        "extra_turn_penalty_total": -0.027343750000000028,
+        "final_map_bonus": 0.17333984375,
+        "final_map_correct": 0.693359375,
+        "invalid_belief_penalty_total": -0.005859375,
+        "malformed_action_penalty_total": 0.0,
+        "mean_brier": 0.13502935468462418,
+        "mean_calibration_reward": -0.13502935468462418,
+        "mean_experiment_reward": -0.08385146726207447,
+        "mean_regret": 0.08385146726207447,
+        "num_turns": 5.21484375,
+        "report_belief_calls": 3.01171875,
+        "run_experiment_calls": 2.203125,
+        "total_reward_reconstructed": -0.07874410319669851,
+        "total_tool_calls": 5.21484375,
         "unused_budget": 0.796875,
-        "valid_belief_reports": 2.998046875
+        "valid_belief_reports": 3.0
       },
-      "avg_reward": -0.08325415793115933,
+      "avg_reward": -0.07874410319669851,
       "base_url": "https://api.pinference.ai/api/v1",
       "env_args": {
         "eval_max_examples": null,
@@ -32,7 +32,7 @@
         "split": "dev",
         "trajectory_dump_path": null
       },
-      "env_id": "epistemic-taste",
+      "env_id": "research-hypothesis-analysis",
       "model": "Qwen/Qwen3-30B-A3B-Instruct-2507",
       "num_examples": 64,
       "pass_all_k": {
@@ -60,7 +60,7 @@
         "trajectory_log",
         "posterior_trace"
       ],
-      "time_ms": 347789.8018360138,
+      "time_ms": 355269.58417892456,
       "tools": [
         {
           "description": "",
@@ -139,29 +139,29 @@
         }
       ],
       "usage": {
-        "input_tokens": 4545.65625,
-        "output_tokens": 190.197265625
+        "input_tokens": 4549.716796875,
+        "output_tokens": 190.484375
       },
       "version_info": {
-        "env_commit": "acd705a1fdf3373ae26fbd8c6d637e40592cf59f",
+        "env_commit": "5e8c3946127eef83f95628b74ffe04b9aac13e47",
         "env_version": "0.1.0",
-        "vf_commit": "acd705a1fdf3373ae26fbd8c6d637e40592cf59f",
+        "vf_commit": "5e8c3946127eef83f95628b74ffe04b9aac13e47",
         "vf_version": "0.1.11"
       }
     },
-    "results_path": "/Users/jarrodbarnes/ai-scientist-training/environments/epistemic_taste/outputs/evals/epistemic-taste--Qwen--Qwen3-30B-A3B-Instruct-2507/2056161e",
+    "results_path": "/Users/jarrodbarnes/ai-scientist-training/environments/research_hypothesis_analysis/outputs/evals/research-hypothesis-analysis--Qwen--Qwen3-30B-A3B-Instruct-2507/570c8c2d",
     "summary": {
-      "extra_turn_penalty_total": -0.029492187500000055,
-      "final_map_correct": 0.6875,
-      "invalid_belief_penalty_total": -0.00390625,
-      "malformed_action_penalty_total": -0.00048828125,
-      "mean_brier": 0.13928722318109646,
-      "mean_calibration_reward": -0.13928722318109646,
-      "mean_experiment_reward": -0.08195521600006278,
-      "mean_regret": 0.08195521600006278,
+      "extra_turn_penalty_total": -0.027343750000000028,
+      "final_map_correct": 0.693359375,
+      "invalid_belief_penalty_total": -0.005859375,
+      "malformed_action_penalty_total": 0.0,
+      "mean_brier": 0.13502935468462418,
+      "mean_calibration_reward": -0.13502935468462418,
+      "mean_experiment_reward": -0.08385146726207447,
+      "mean_regret": 0.08385146726207447,
       "num_rows": 512,
-      "num_turns": 5.2109375,
-      "reward": -0.08325415793115933
+      "num_turns": 5.21484375,
+      "reward": -0.07874410319669851
     }
   },
   "heuristics": {

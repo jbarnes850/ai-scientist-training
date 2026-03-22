@@ -7,11 +7,11 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ENV_ROOT = ROOT / "environments" / "epistemic_taste"
+ENV_ROOT = ROOT / "environments" / "research_hypothesis_analysis"
 if str(ENV_ROOT) not in sys.path:
     sys.path.insert(0, str(ENV_ROOT))
 
-from epistemic_taste.dataset import MANIFEST_PATH, SPLIT_SPECS, ensure_frozen_dataset, split_path  # noqa: E402
+from research_hypothesis_analysis.dataset import MANIFEST_PATH, SPLIT_SPECS, ensure_frozen_dataset, split_path  # noqa: E402
 
 
 def _load_rows(path: Path) -> list[dict]:

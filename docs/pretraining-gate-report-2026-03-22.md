@@ -9,16 +9,16 @@ No-go for hosted GRPO yet. The task is not dead and not saturated, but the GRPO-
 - Updated dev base-model summary: local artifact at `configs/base_model_eval_summary.json`
 - GRPO-aligned base-model summary: local artifact at `configs/base_model_eval_summary_grpo8.json`
 - Saved eval results used for gating:
-  - `environments/epistemic_taste/outputs/evals/epistemic-taste--Qwen--Qwen3-30B-A3B-Instruct-2507/6689ca4e/results.jsonl`
-  - `environments/epistemic_taste/outputs/evals/epistemic-taste--Qwen--Qwen3-30B-A3B-Instruct-2507/6ae3ab9e/results.jsonl`
+  - `environments/research_hypothesis_analysis/outputs/evals/research-hypothesis-analysis--Qwen--Qwen3-30B-A3B-Instruct-2507/6689ca4e/results.jsonl`
+  - `environments/research_hypothesis_analysis/outputs/evals/research-hypothesis-analysis--Qwen--Qwen3-30B-A3B-Instruct-2507/6ae3ab9e/results.jsonl`
 
 Note: the `outputs/` eval artifacts are local run products and are not committed to the public repo.
 
 ## Validation Evidence
 
 - Preflight passed:
-  - `uv run ruff check environments/epistemic_taste scripts`
-  - `.venv/bin/python -m py_compile environments/epistemic_taste/epistemic_taste/*.py scripts/*.py environments/epistemic_taste/tests/test_epistemic_taste.py`
+  - `uv run ruff check environments/research_hypothesis_analysis scripts`
+  - `.venv/bin/python -m py_compile environments/research_hypothesis_analysis/research_hypothesis_analysis/*.py scripts/*.py environments/research_hypothesis_analysis/tests/test_environment.py`
 - Eval parity checked:
   - model: `Qwen/Qwen3-30B-A3B-Instruct-2507`
   - sampling: `temperature=0.3`, `max_tokens=1024`

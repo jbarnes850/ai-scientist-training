@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from _epistemic_common import (
+from _common import (
     ROOT,
     latest_results_path,
     parse_results,
@@ -51,7 +51,7 @@ def main() -> None:
             "summary": summarize_results_rows(rows),
         }
     else:
-        existing = latest_results_path("epistemic-taste", args.model)
+        existing = latest_results_path("research-hypothesis-analysis", args.model)
         if existing is not None:
             _, rows = parse_results(existing)
             output["existing_base_model_results"] = {

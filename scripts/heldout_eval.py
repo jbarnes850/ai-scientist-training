@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from _epistemic_common import ROOT, parse_results, run_model_eval, summarize_results_rows
+from _common import ROOT, parse_results, run_model_eval, summarize_results_rows
 
 
 def main() -> None:

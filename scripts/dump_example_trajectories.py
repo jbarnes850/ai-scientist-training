@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from _epistemic_common import ROOT, _load_rows, simulate_policy
+from _common import ROOT, _load_rows, simulate_policy
 
 
 def main() -> None:

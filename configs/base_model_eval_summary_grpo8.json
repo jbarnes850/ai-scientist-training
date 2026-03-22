@@ -32,7 +32,7 @@
         "split": "dev",
         "trajectory_dump_path": null
       },
-      "env_id": "epistemic-taste",
+      "env_id": "research-hypothesis-analysis",
       "model": "Qwen/Qwen3-30B-A3B-Instruct-2507",
       "num_examples": 32,
       "pass_all_k": {
@@ -149,7 +149,7 @@
         "vf_version": "0.1.11"
       }
     },
-    "results_path": "/Users/jarrodbarnes/ai-scientist-training/environments/epistemic_taste/outputs/evals/epistemic-taste--Qwen--Qwen3-30B-A3B-Instruct-2507/adb9ad74",
+    "results_path": "/Users/jarrodbarnes/ai-scientist-training/environments/research_hypothesis_analysis/outputs/evals/research-hypothesis-analysis--Qwen--Qwen3-30B-A3B-Instruct-2507/adb9ad74",
     "summary": {
       "extra_turn_penalty_total": -0.023632812499999968,
       "final_map_correct": 0.65625,

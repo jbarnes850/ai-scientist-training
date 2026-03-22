@@ -1,15 +1,17 @@
-## Epistemic Taste
+# Research Hypothesis Analysis
 
-Synthetic Prime/verifiers environment for GRPO training on epistemic behavior under uncertainty:
+This repo is about training an AI scientist that knows what to investigate and when to update beliefs, not just how to execute procedures.
 
-- `RQ1`: choose experiments by expected information gain rather than convenience
-- `RQ2`: revise beliefs proportionally when evidence conflicts with the current hypothesis
+- `RQ1`: experiment selection under uncertainty. Given a space of possible experiments, can RL train a model to prioritize by expected information gain rather than by ease or familiarity?
+- `RQ2`: belief revision under conflicting evidence. When new evidence contradicts the model's working hypothesis, does it update proportionally to evidence strength or anchor to its prior?
 
-This repo contains one frozen synthetic environment family, a reproducible 5,000-episode dataset, local eval utilities, and a hosted Prime RL config.
+The benchmark is a synthetic Prime/verifiers environment for GRPO training on epistemic behavior under uncertainty. It contains one frozen environment family, a reproducible 5,000-episode dataset, local eval utilities, and a hosted Prime RL config.
+
+The public environment ID is `research-hypothesis-analysis`. The corresponding Python package is `research_hypothesis_analysis`. This split keeps the hosted Prime name readable while keeping imports conventional for Python users.
 
 ## Repo Layout
 
-- `environments/epistemic_taste/`: environment package, generator, frozen data, tests
+- `environments/research_hypothesis_analysis/`: environment package, generator, frozen data, tests
 - `scripts/`: dataset QA, base-model eval, held-out eval, reward-variance gate, trajectory dump
 - `configs/`: Prime RL config and reproducible logged example trajectories
 
@@ -25,18 +27,18 @@ This repo contains one frozen synthetic environment family, a reproducible 5,000
 ```bash
 cd /Users/jarrodbarnes/ai-scientist-training
 uv sync
-prime env install epistemic-taste -p ./environments
+prime env install research-hypothesis-analysis -p ./environments
 ```
 
 ## Reproducible Dataset
 
-The frozen split files are committed under `environments/epistemic_taste/epistemic_taste/data/`.
+The frozen split files are committed under `environments/research_hypothesis_analysis/research_hypothesis_analysis/data/`.
 
 To regenerate them deterministically:
 
 ```bash
 cd /Users/jarrodbarnes/ai-scientist-training
-.venv/bin/python scripts/generate_epistemic_taste_dataset.py --force
+.venv/bin/python scripts/generate_dataset.py --force
 .venv/bin/python scripts/verify_dataset.py --strict
 ```
 
@@ -50,9 +52,9 @@ Expected split spec:
 
 ```bash
 cd /Users/jarrodbarnes/ai-scientist-training
-uv run ruff check environments/epistemic_taste scripts
-.venv/bin/python -m py_compile environments/epistemic_taste/epistemic_taste/*.py scripts/*.py environments/epistemic_taste/tests/test_epistemic_taste.py
-.venv/bin/python -m unittest environments/epistemic_taste/tests/test_epistemic_taste.py
+uv run ruff check environments/research_hypothesis_analysis scripts
+.venv/bin/python -m py_compile environments/research_hypothesis_analysis/research_hypothesis_analysis/*.py scripts/*.py environments/research_hypothesis_analysis/tests/test_environment.py
+.venv/bin/python -m unittest environments/research_hypothesis_analysis/tests/test_environment.py
 ```
 
 ## Evaluation
@@ -87,14 +89,14 @@ cd /Users/jarrodbarnes/ai-scientist-training
 
 ## Hosted Prime RL
 
-The hosted config lives at `configs/epistemic_taste_grpo.toml` and now points at the published environment ID `jbarnes850/epistemic-taste`.
+The hosted config lives at `configs/research_hypothesis_analysis_grpo.toml` and now points at the published environment ID `jbarnes850/research-hypothesis-analysis`.
 
 Publish a new version and run hosted training:
 
 ```bash
 cd /Users/jarrodbarnes/ai-scientist-training
-prime env push epistemic-taste -p ./environments -o jbarnes850
-prime rl run configs/epistemic_taste_grpo.toml
+prime env push research-hypothesis-analysis -p ./environments -o jbarnes850
+prime rl run configs/research_hypothesis_analysis_grpo.toml
 ```
 
 ## Notes
