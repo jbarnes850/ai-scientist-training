@@ -5,24 +5,24 @@
       "avg_metrics": {
         "contradiction_episode": 0.234375,
         "experiment_turns": 2.203125,
-        "extra_turn_penalty_total": -0.0474609374999999,
-        "final_map_bonus": 0.1728515625,
-        "final_map_correct": 0.69140625,
-        "invalid_belief_penalty_total": 0.0,
-        "malformed_action_penalty_total": -0.0107421875,
-        "mean_brier": 0.16209000594975237,
-        "mean_calibration_reward": -0.16209000594975237,
-        "mean_experiment_reward": -0.035538443814519094,
-        "mean_regret": 0.035538443814519094,
-        "num_turns": 5.24609375,
-        "report_belief_calls": 3.0,
-        "run_experiment_calls": 2.24609375,
-        "total_reward_reconstructed": -0.08298001226427142,
-        "total_tool_calls": 5.24609375,
+        "extra_turn_penalty_total": -0.029492187500000055,
+        "final_map_bonus": 0.171875,
+        "final_map_correct": 0.6875,
+        "invalid_belief_penalty_total": -0.00390625,
+        "malformed_action_penalty_total": -0.00048828125,
+        "mean_brier": 0.13928722318109646,
+        "mean_calibration_reward": -0.13928722318109646,
+        "mean_experiment_reward": -0.08195521600006278,
+        "mean_regret": 0.08195521600006278,
+        "num_turns": 5.2109375,
+        "report_belief_calls": 3.005859375,
+        "run_experiment_calls": 2.205078125,
+        "total_reward_reconstructed": -0.08325415793115933,
+        "total_tool_calls": 5.2109375,
         "unused_budget": 0.796875,
-        "valid_belief_reports": 3.0
+        "valid_belief_reports": 2.998046875
       },
-      "avg_reward": -0.08298001226427142,
+      "avg_reward": -0.08325415793115933,
       "base_url": "https://api.pinference.ai/api/v1",
       "env_args": {
         "eval_max_examples": null,
@@ -38,15 +38,17 @@
       "pass_all_k": {
         "1": 0.0,
         "2": 0.0,
-        "4": 0.0
+        "4": 0.0,
+        "8": 0.0
       },
       "pass_at_k": {
         "1": 0.0,
         "2": 0.0,
-        "4": 0.0
+        "4": 0.0,
+        "8": 0.0
       },
       "pass_threshold": 0.5,
-      "rollouts_per_example": 4,
+      "rollouts_per_example": 8,
       "sampling_args": {
         "extra_body": {},
         "max_tokens": 1024,
@@ -58,7 +60,7 @@
         "trajectory_log",
         "posterior_trace"
       ],
-      "time_ms": 165764.27698135376,
+      "time_ms": 347789.8018360138,
       "tools": [
         {
           "description": "",
@@ -68,11 +70,11 @@
             "properties": {
               "experiment_id": {
                 "enum": [
-                  "informative",
-                  "medium",
-                  "cheap_weak",
-                  "redundant",
-                  "high_cost_informative"
+                  "Experiment_A",
+                  "Experiment_B",
+                  "Experiment_C",
+                  "Experiment_D",
+                  "Experiment_E"
                 ],
                 "title": "Experiment Id",
                 "type": "string"
@@ -137,29 +139,29 @@
         }
       ],
       "usage": {
-        "input_tokens": 4233.32421875,
-        "output_tokens": 189.390625
+        "input_tokens": 4545.65625,
+        "output_tokens": 190.197265625
       },
       "version_info": {
-        "env_commit": "2dd813cae11a477e2be6e060b3badef7bb0e217c",
+        "env_commit": "acd705a1fdf3373ae26fbd8c6d637e40592cf59f",
         "env_version": "0.1.0",
-        "vf_commit": "2dd813cae11a477e2be6e060b3badef7bb0e217c",
+        "vf_commit": "acd705a1fdf3373ae26fbd8c6d637e40592cf59f",
         "vf_version": "0.1.11"
       }
     },
-    "results_path": "/Users/jarrodbarnes/ai-scientist-training/environments/epistemic_taste/outputs/evals/epistemic-taste--Qwen--Qwen3-30B-A3B-Instruct-2507/6689ca4e",
+    "results_path": "/Users/jarrodbarnes/ai-scientist-training/environments/epistemic_taste/outputs/evals/epistemic-taste--Qwen--Qwen3-30B-A3B-Instruct-2507/2056161e",
     "summary": {
-      "extra_turn_penalty_total": -0.0474609374999999,
-      "final_map_correct": 0.69140625,
-      "invalid_belief_penalty_total": 0.0,
-      "malformed_action_penalty_total": -0.0107421875,
-      "mean_brier": 0.16209000594975237,
-      "mean_calibration_reward": -0.16209000594975237,
-      "mean_experiment_reward": -0.035538443814519094,
-      "mean_regret": 0.035538443814519094,
-      "num_rows": 256,
-      "num_turns": 5.24609375,
-      "reward": -0.08298001226427142
+      "extra_turn_penalty_total": -0.029492187500000055,
+      "final_map_correct": 0.6875,
+      "invalid_belief_penalty_total": -0.00390625,
+      "malformed_action_penalty_total": -0.00048828125,
+      "mean_brier": 0.13928722318109646,
+      "mean_calibration_reward": -0.13928722318109646,
+      "mean_experiment_reward": -0.08195521600006278,
+      "mean_regret": 0.08195521600006278,
+      "num_rows": 512,
+      "num_turns": 5.2109375,
+      "reward": -0.08325415793115933
     }
   },
   "heuristics": {
