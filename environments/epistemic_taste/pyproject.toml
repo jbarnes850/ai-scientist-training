@@ -1,0 +1,40 @@
+[project]
+name = "epistemic-taste"
+description = "Synthetic Bayesian multi-turn environment for epistemic experiment selection and belief revision"
+tags = ["prime-rl", "multi-turn", "bayesian", "train", "eval"]
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "datasets>=4.6.1",
+    "numpy>=2.4.3",
+    "verifiers>=0.1.11",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = [
+    "epistemic_taste/**/*.py",
+    "epistemic_taste/data/*.json",
+    "epistemic_taste/data/*.jsonl",
+    "README.md",
+    "pyproject.toml",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["epistemic_taste"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "epistemic_taste/**/*.py",
+    "epistemic_taste/data/*.json",
+    "epistemic_taste/data/*.jsonl",
+    "README.md",
+    "pyproject.toml",
+]
+
+[tool.verifiers.eval]
+num_examples = 20
+rollouts_per_example = 4

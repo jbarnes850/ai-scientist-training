@@ -1,0 +1,29 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Local workspace metadata
+.codex/
+.prime/
+.ruff_cache/
+prime-rl/
+
+# Agent instruction files not meant for public collaboration
+AGENTS.md
+CLAUDE.md
+environments/AGENTS.md
+
+# outputs from `prime eval run`
+outputs/
+environments/*/outputs/
+
+# Generated local analysis artifacts
+configs/base_model_eval_summary.json
+configs/heldout_eval_summary.json
