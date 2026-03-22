@@ -99,17 +99,18 @@ def _choose_experiment(
 
 def simulate_policy(episode: dict, policy: str, seed: int = 0) -> dict:
     rng = random.Random(seed)
+    canonical_prior = dict(episode["hidden"].get("canonical_prior", episode["prior"]))
     state = {
         "mode": episode["mode"],
         "episode_spec": episode,
-        "current_posterior": dict(episode["prior"]),
+        "current_posterior": canonical_prior,
         "reward_events": [],
         "belief_reports": [],
         "used_experiments": [],
         "available_experiments": list(EXPERIMENT_IDS),
         "trajectory_log": [],
         "posterior_trace": [
-            {"step_index": 0, "source": "prior", "posterior": dict(episode["prior"])}
+            {"step_index": 0, "source": "prior", "posterior": dict(canonical_prior)}
         ],
         "observation_history": [],
         "last_valid_belief": None,

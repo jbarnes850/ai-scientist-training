@@ -46,7 +46,12 @@ def main() -> None:
         )
         prompt_domains = {row["info"]["domain_key"] for row in rows}
         prompt_templates = {int(row["info"]["template_id"]) for row in rows}
-        prior_maps = [max(row["info"]["prior"].values()) for row in rows]
+        prior_maps = [
+            max(
+                row["info"]["hidden"].get("canonical_prior", row["info"]["prior"]).values()
+            )
+            for row in rows
+        ]
         likelihood_multipliers = [
             float(row["info"]["hidden"]["likelihood_multiplier"]) for row in rows
         ]

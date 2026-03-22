@@ -16,9 +16,15 @@ from research_hypothesis_analysis.bayes import (  # noqa: E402
     OPAQUE_LABELS,
     SplitSpec,
     build_alias_map,
+    build_hypothesis_display_map,
+    build_observation_bank,
     build_episode,
+    build_display_order,
     invert_alias_map,
+    invert_hypothesis_display_map,
     posterior_update,
+    remap_distribution_to_canonical,
+    remap_distribution_to_visible,
     rewrite_prompt_with_aliases,
     utility_map_for_state,
 )
@@ -81,7 +87,7 @@ class EnvironmentTests(unittest.TestCase):
             template_id=0,
         )
         utilities = utility_map_for_state(
-            episode["info"]["prior"],
+            episode["info"]["hidden"]["canonical_prior"],
             episode["info"]["hidden"]["likelihoods"],
             ["informative", "cheap_weak"],
         )
@@ -137,6 +143,29 @@ class PresentationPerturbationTests(unittest.TestCase):
         reverse = invert_alias_map(alias_map)
         for opaque, canonical in alias_map.items():
             self.assertEqual(reverse[canonical], opaque)
+
+    def test_hypothesis_display_map_round_trip(self) -> None:
+        rng = np.random.default_rng(111)
+        display_to_canonical = build_hypothesis_display_map(rng)
+        canonical_to_display = invert_hypothesis_display_map(display_to_canonical)
+        canonical_prior = {"H1": 0.2, "H2": 0.3, "H3": 0.5}
+        visible_prior = remap_distribution_to_visible(
+            canonical_prior,
+            display_to_canonical,
+        )
+        round_trip = remap_distribution_to_canonical(
+            visible_prior,
+            display_to_canonical,
+        )
+        self.assertEqual(set(display_to_canonical.keys()), {"H1", "H2", "H3"})
+        self.assertEqual(set(canonical_to_display.keys()), {"H1", "H2", "H3"})
+        self.assertEqual(round_trip, canonical_prior)
+
+    def test_build_display_order_is_permutation(self) -> None:
+        rng = np.random.default_rng(222)
+        order = build_display_order(rng)
+        self.assertEqual(set(order), {"H1", "H2", "H3"})
+        self.assertEqual(len(order), 3)
 
     def test_rewrite_prompt_replaces_ids(self) -> None:
         rng = np.random.default_rng(101)
@@ -241,6 +270,32 @@ class PresentationPerturbationTests(unittest.TestCase):
             run_exp.parameters["properties"]["experiment_id"]["enum"],
             list(OPAQUE_LABELS),
         )
+
+    def test_surface_frames_add_prompt_diversity(self) -> None:
+        questions = set()
+        prompt_bodies = set()
+        for seed in range(12):
+            episode = build_episode(
+                split_spec=self.split_spec,
+                episode_index=seed,
+                episode_seed=seed,
+                mode=ACTIVE_MODE,
+                contradiction_target=False,
+                domain_key="cell_signaling",
+                template_id=seed % 6,
+            )
+            questions.add(episode["info"]["question"])
+            prompt_bodies.add(episode["prompt"][0]["content"])
+        self.assertGreater(len(questions), 1)
+        self.assertGreater(len(prompt_bodies), 1)
+
+    def test_observation_bank_varies_across_episode_seeds(self) -> None:
+        texts = set()
+        for seed in range(20, 28):
+            rng = np.random.default_rng(seed)
+            observation_bank = build_observation_bank(rng, domain_key="cell_signaling")
+            texts.add(observation_bank["informative"]["O1"])
+        self.assertGreater(len(texts), 1)
 
 
 if __name__ == "__main__":

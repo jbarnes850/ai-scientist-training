@@ -20,6 +20,8 @@ from .bayes import (
     build_alias_map,
     compute_episode_summary,
     invert_alias_map,
+    remap_distribution_to_canonical,
+    remap_distribution_to_visible,
     rewrite_prompt_with_aliases,
     utility_map_for_state,
 )
@@ -132,12 +134,28 @@ class ResearchHypothesisAnalysisEnv(vf.StatefulToolEnv):
         state["episode_spec"] = episode
         state["mode"] = episode["mode"]
         state["available_experiments"] = list(EXPERIMENT_IDS)
-        state["current_posterior"] = dict(episode["prior"])
+        canonical_prior = cast(
+            dict[str, float],
+            episode["hidden"].get("canonical_prior", episode["prior"]),
+        )
+        state["current_posterior"] = dict(canonical_prior)
+        state["hypothesis_display_to_canonical"] = dict(
+            episode["hidden"].get(
+                "hypothesis_display_to_canonical",
+                {label: label for label in BELIEF_KEYS},
+            )
+        )
+        state["hypothesis_canonical_to_display"] = dict(
+            episode["hidden"].get(
+                "hypothesis_canonical_to_display",
+                {label: label for label in BELIEF_KEYS},
+            )
+        )
         state["posterior_trace"] = [
             {
                 "step_index": 0,
                 "source": "prior",
-                "posterior": dict(episode["prior"]),
+                "posterior": dict(canonical_prior),
             }
         ]
         state["observation_history"] = []
@@ -421,24 +439,39 @@ class ResearchHypothesisAnalysisEnv(vf.StatefulToolEnv):
             return f"Invalid belief vector: {validation_error}"
 
         exact_posterior = cast(dict[str, float], state["current_posterior"])
+        display_to_canonical = cast(
+            dict[str, str],
+            state.get(
+                "hypothesis_display_to_canonical",
+                {label: label for label in BELIEF_KEYS},
+            ),
+        )
+        canonical_belief = remap_distribution_to_canonical(
+            belief_payload,
+            display_to_canonical,
+        )
+        visible_exact_posterior = remap_distribution_to_visible(
+            exact_posterior,
+            display_to_canonical,
+        )
         brier = sum(
-            (float(belief_payload[key]) - float(exact_posterior[key])) ** 2
-            for key in BELIEF_KEYS
+            (float(canonical_belief[key]) - float(exact_posterior[key])) ** 2
+            for key in exact_posterior
         )
         calibration_reward = -brier
 
         state["belief_reports"].append(
             {
                 "belief": {key: float(belief_payload[key]) for key in BELIEF_KEYS},
-                "exact_posterior": dict(exact_posterior),
+                "belief_canonical": canonical_belief,
+                "exact_posterior": visible_exact_posterior,
+                "exact_posterior_canonical": dict(exact_posterior),
                 "stop": bool(stop),
                 "brier": float(brier),
                 "calibration_reward": float(calibration_reward),
             }
         )
-        state["last_valid_belief"] = {
-            key: float(belief_payload[key]) for key in BELIEF_KEYS
-        }
+        state["last_valid_belief"] = canonical_belief
         self._append_reward_event(
             state,
             kind="calibration_reward",

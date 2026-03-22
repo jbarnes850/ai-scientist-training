@@ -50,6 +50,46 @@ OPAQUE_LABELS = (
     "Experiment_E",
 )
 
+OBSERVATION_PREFIXES = {
+    "informative": (
+        "Primary readout",
+        "Main assay result",
+        "High-signal finding",
+        "Most diagnostic observation",
+    ),
+    "medium": (
+        "Intermediate readout",
+        "Mid-resolution finding",
+        "Moderate evidence summary",
+        "Paired snapshot result",
+    ),
+    "cheap_weak": (
+        "Low-cost proxy",
+        "Quick proxy check",
+        "Cheap signal read",
+        "Weak indicator",
+    ),
+    "redundant": (
+        "Repeat assay",
+        "Redundant check",
+        "Replication readout",
+        "Follow-up repeat",
+    ),
+    "high_cost_informative": (
+        "High-cost panel",
+        "Deep profiling result",
+        "Comprehensive readout",
+        "Premium assay finding",
+    ),
+}
+
+OBSERVATION_TEMPLATES = (
+    "{prefix}: {core}",
+    "{prefix} for the {domain} setting: {core}",
+    "{prefix}. {core}",
+    "Observed in the {domain} setting, {core_lc}",
+)
+
 
 def build_alias_map(rng: np.random.Generator) -> dict[str, str]:
     """Return {opaque_label: canonical_id} with shuffled assignment."""
@@ -61,6 +101,62 @@ def build_alias_map(rng: np.random.Generator) -> dict[str, str]:
 def invert_alias_map(alias_map: dict[str, str]) -> dict[str, str]:
     """Return {canonical_id: opaque_label}."""
     return {v: k for k, v in alias_map.items()}
+
+
+def build_hypothesis_display_map(rng: np.random.Generator) -> dict[str, str]:
+    """Return {visible_label: canonical_hypothesis_id} with shuffled assignment."""
+    canonical = list(BELIEF_KEYS)
+    rng.shuffle(canonical)
+    return {
+        visible_label: canonical[index]
+        for index, visible_label in enumerate(BELIEF_KEYS)
+    }
+
+
+def invert_hypothesis_display_map(
+    display_to_canonical: dict[str, str],
+) -> dict[str, str]:
+    """Return {canonical_hypothesis_id: visible_label}."""
+    return {canonical: visible for visible, canonical in display_to_canonical.items()}
+
+
+def build_display_order(
+    rng: np.random.Generator,
+    labels: Iterable[str] = BELIEF_KEYS,
+) -> tuple[str, ...]:
+    ordered = list(labels)
+    rng.shuffle(ordered)
+    return tuple(ordered)
+
+
+def remap_hypotheses_to_visible(
+    canonical_hypotheses: dict[str, str],
+    display_to_canonical: dict[str, str],
+) -> dict[str, str]:
+    return {
+        visible_label: canonical_hypotheses[canonical_label]
+        for visible_label, canonical_label in display_to_canonical.items()
+    }
+
+
+def remap_distribution_to_visible(
+    canonical_dist: dict[str, float],
+    display_to_canonical: dict[str, str],
+) -> dict[str, float]:
+    return {
+        visible_label: float(canonical_dist[canonical_label])
+        for visible_label, canonical_label in display_to_canonical.items()
+    }
+
+
+def remap_distribution_to_canonical(
+    visible_dist: dict[str, float],
+    display_to_canonical: dict[str, str],
+) -> dict[str, float]:
+    return {
+        canonical_label: float(visible_dist[visible_label])
+        for visible_label, canonical_label in display_to_canonical.items()
+    }
 
 
 def rewrite_prompt_with_aliases(
@@ -112,22 +208,94 @@ def rewrite_prompt_with_aliases(
     return new_messages
 
 
+def render_observation_text(
+    rng: np.random.Generator,
+    *,
+    domain_display: str,
+    experiment_id: str,
+    core_text: str,
+) -> str:
+    prefix = str(rng.choice(OBSERVATION_PREFIXES[experiment_id]))
+    template = str(rng.choice(OBSERVATION_TEMPLATES))
+    core_lc = core_text[0].lower() + core_text[1:] if core_text else core_text
+    return template.format(
+        prefix=prefix,
+        core=core_text,
+        core_lc=core_lc,
+        domain=domain_display,
+    )
+
+
+def build_observation_bank(
+    rng: np.random.Generator,
+    *,
+    domain_key: str,
+) -> dict[str, dict[str, str]]:
+    domain = DOMAIN_LIBRARY[domain_key]
+    observation_bank: dict[str, dict[str, str]] = {}
+    for experiment_id in EXPERIMENT_IDS:
+        observation_bank[experiment_id] = {}
+        for outcome_index, outcome_id in enumerate(OUTCOME_IDS):
+            core_text = domain["outcomes"][experiment_id][outcome_index]
+            observation_bank[experiment_id][outcome_id] = render_observation_text(
+                rng,
+                domain_display=domain["display"],
+                experiment_id=experiment_id,
+                core_text=core_text,
+            )
+    return observation_bank
+
+
 DOMAIN_LIBRARY = {
     "cell_signaling": {
         "display": "cell signaling",
-        "question": "Which mechanism best explains why receptor X produces a transient response after perturbation P?",
-        "hypotheses": {
-            "H1": "a thresholded feed-forward pulse model",
-            "H2": "rapid receptor desensitization after activation",
-            "H3": "a delayed negative-feedback loop that shuts the pathway down",
-        },
-        "experiments": {
-            "informative": "Run a high-time-resolution phospho-signaling assay after perturbation P.",
-            "medium": "Measure paired phospho and transcript snapshots at an intermediate cadence.",
-            "cheap_weak": "Read out one low-cost proxy marker from the pathway's downstream target panel.",
-            "redundant": "Repeat a compressed version of the main pathway readout with a slightly different antibody panel.",
-            "high_cost_informative": "Use a high-cost single-cell time-course with perturbation tracking.",
-        },
+        "frames": (
+            {
+                "question": "Which mechanism best explains why receptor X produces a transient response after perturbation P?",
+                "hypotheses": {
+                    "H1": "a thresholded feed-forward pulse model",
+                    "H2": "rapid receptor desensitization after activation",
+                    "H3": "a delayed negative-feedback loop that shuts the pathway down",
+                },
+                "experiments": {
+                    "informative": "Run a high-time-resolution phospho-signaling assay after perturbation P.",
+                    "medium": "Measure paired phospho and transcript snapshots at an intermediate cadence.",
+                    "cheap_weak": "Read out one low-cost proxy marker from the pathway's downstream target panel.",
+                    "redundant": "Repeat a compressed version of the main pathway readout with a slightly different antibody panel.",
+                    "high_cost_informative": "Use a high-cost single-cell time-course with perturbation tracking.",
+                },
+            },
+            {
+                "question": "Which explanation best accounts for the short kinase burst after the ligand challenge?",
+                "hypotheses": {
+                    "H1": "an upstream pulse that briefly aligns the cascade before it relaxes",
+                    "H2": "fast receptor-state depletion once signaling begins",
+                    "H3": "a lagged inhibitory circuit that closes the pathway after a short delay",
+                },
+                "experiments": {
+                    "informative": "Run a dense kinase time-course immediately after the ligand challenge.",
+                    "medium": "Collect paired kinase and transcript snapshots across the early and middle windows.",
+                    "cheap_weak": "Check one inexpensive downstream phospho-proxy from the routine pathway panel.",
+                    "redundant": "Repeat the standard signaling assay with almost the same panel and cadence.",
+                    "high_cost_informative": "Run a single-cell ligand-response time-course with perturbation tracking.",
+                },
+            },
+            {
+                "question": "What most plausibly drives the brief pathway activation seen after inhibitor washout?",
+                "hypotheses": {
+                    "H1": "a transient feed-forward alignment that self-resolves quickly",
+                    "H2": "an initial rebound followed by rapid desensitization of the receptor complex",
+                    "H3": "a delayed feedback suppressor that turns the pathway off after the rebound",
+                },
+                "experiments": {
+                    "informative": "Measure pathway phosphorylation at high temporal resolution during washout.",
+                    "medium": "Sample paired phospho and downstream transcription signatures at moderate cadence.",
+                    "cheap_weak": "Use a low-cost downstream reporter as a quick proxy for pathway activity.",
+                    "redundant": "Repeat the baseline washout assay with nearly identical readout settings.",
+                    "high_cost_informative": "Profile the washout response with a high-cost single-cell live readout.",
+                },
+            },
+        ),
         "outcomes": {
             "informative": [
                 "The assay shows a sharp early spike that rapidly resets.",
@@ -158,19 +326,53 @@ DOMAIN_LIBRARY = {
     },
     "ecology": {
         "display": "ecology",
-        "question": "Which mechanism best explains the observed collapse-and-recovery dynamics in the marsh food web?",
-        "hypotheses": {
-            "H1": "a threshold predator pulse that briefly suppresses grazers",
-            "H2": "rapid resource depletion after an initial bloom",
-            "H3": "delayed density-dependent feedback from the nursery habitat",
-        },
-        "experiments": {
-            "informative": "Run a fine-grained predator exclusion and resource sampling campaign across the disturbance window.",
-            "medium": "Collect paired grazer-count and nutrient snapshots at moderate cadence.",
-            "cheap_weak": "Use one inexpensive proxy survey from the historical monitoring station.",
-            "redundant": "Repeat the standard exclusion assay with nearly identical marsh transects.",
-            "high_cost_informative": "Deploy a tagged high-resolution field array across the entire estuary segment.",
-        },
+        "frames": (
+            {
+                "question": "Which mechanism best explains the observed collapse-and-recovery dynamics in the marsh food web?",
+                "hypotheses": {
+                    "H1": "a threshold predator pulse that briefly suppresses grazers",
+                    "H2": "rapid resource depletion after an initial bloom",
+                    "H3": "delayed density-dependent feedback from the nursery habitat",
+                },
+                "experiments": {
+                    "informative": "Run a fine-grained predator exclusion and resource sampling campaign across the disturbance window.",
+                    "medium": "Collect paired grazer-count and nutrient snapshots at moderate cadence.",
+                    "cheap_weak": "Use one inexpensive proxy survey from the historical monitoring station.",
+                    "redundant": "Repeat the standard exclusion assay with nearly identical marsh transects.",
+                    "high_cost_informative": "Deploy a tagged high-resolution field array across the entire estuary segment.",
+                },
+            },
+            {
+                "question": "What most likely explains the sudden dip and rebound in the estuary grazer network?",
+                "hypotheses": {
+                    "H1": "a brief predator surge that knocks the grazer layer down before easing",
+                    "H2": "a bloom that quickly exhausts the local resource base",
+                    "H3": "a delayed habitat feedback that suppresses recovery only after the first shock",
+                },
+                "experiments": {
+                    "informative": "Run a high-frequency predator-exclusion and nutrient sampling campaign across the shock window.",
+                    "medium": "Measure grazers and nutrient levels together at an intermediate cadence.",
+                    "cheap_weak": "Use one low-cost proxy read from the standing estuary monitor.",
+                    "redundant": "Repeat the usual exclusion assay on nearly the same shoreline transects.",
+                    "high_cost_informative": "Deploy a high-resolution tagged field array across the estuary reach.",
+                },
+            },
+            {
+                "question": "Which account best fits the lagoon ecosystem's brief crash followed by partial recovery?",
+                "hypotheses": {
+                    "H1": "a threshold predator pulse that briefly depresses the consumer layer",
+                    "H2": "resource depletion immediately after the early bloom pulse",
+                    "H3": "a lagged nursery-habitat feedback that binds only in the late phase",
+                },
+                "experiments": {
+                    "informative": "Run a dense exclusion-and-resource survey throughout the disturbance interval.",
+                    "medium": "Collect paired consumer and nutrient snapshots over the same period.",
+                    "cheap_weak": "Read one inexpensive ecosystem proxy from the routine lagoon station.",
+                    "redundant": "Repeat the baseline field assay with almost unchanged transects.",
+                    "high_cost_informative": "Install a high-cost tagged sensor array across the lagoon segment.",
+                },
+            },
+        ),
         "outcomes": {
             "informative": [
                 "Counts show a brief synchronized predator pulse followed by rapid normalization.",
@@ -201,19 +403,53 @@ DOMAIN_LIBRARY = {
     },
     "materials": {
         "display": "materials",
-        "question": "Which mechanism best explains the unstable conductivity profile in the thin-film stack?",
-        "hypotheses": {
-            "H1": "a thresholded transient alignment of conductive domains",
-            "H2": "contact degradation after the initial current surge",
-            "H3": "delayed defect-mediated feedback from the interface layer",
-        },
-        "experiments": {
-            "informative": "Run a high-time-resolution bias-sweep with in situ structural readout.",
-            "medium": "Measure paired conductivity and interface signatures at moderate cadence.",
-            "cheap_weak": "Use a low-cost proxy read from the standard wafer monitor.",
-            "redundant": "Repeat the baseline conductivity scan with a nearly identical probe geometry.",
-            "high_cost_informative": "Run a high-cost microscopy-plus-bias sequence on the same stack.",
-        },
+        "frames": (
+            {
+                "question": "Which mechanism best explains the unstable conductivity profile in the thin-film stack?",
+                "hypotheses": {
+                    "H1": "a thresholded transient alignment of conductive domains",
+                    "H2": "contact degradation after the initial current surge",
+                    "H3": "delayed defect-mediated feedback from the interface layer",
+                },
+                "experiments": {
+                    "informative": "Run a high-time-resolution bias-sweep with in situ structural readout.",
+                    "medium": "Measure paired conductivity and interface signatures at moderate cadence.",
+                    "cheap_weak": "Use a low-cost proxy read from the standard wafer monitor.",
+                    "redundant": "Repeat the baseline conductivity scan with a nearly identical probe geometry.",
+                    "high_cost_informative": "Run a high-cost microscopy-plus-bias sequence on the same stack.",
+                },
+            },
+            {
+                "question": "What best explains the brief conductivity gain and later collapse in the printed device?",
+                "hypotheses": {
+                    "H1": "a short-lived alignment of conductive domains under the initial bias",
+                    "H2": "rapid contact wear after the first current surge",
+                    "H3": "a delayed interface-feedback process driven by defect build-up",
+                },
+                "experiments": {
+                    "informative": "Run a dense bias sweep with simultaneous structural monitoring on the device.",
+                    "medium": "Collect paired conductivity and interface diagnostics at intermediate cadence.",
+                    "cheap_weak": "Use a quick low-cost proxy from the routine fabrication monitor.",
+                    "redundant": "Repeat the standard conductivity scan with almost the same probe setup.",
+                    "high_cost_informative": "Run a high-cost microscopy-and-bias session on the same printed device.",
+                },
+            },
+            {
+                "question": "Which mechanism most plausibly drives the unstable transport pattern in the interface stack?",
+                "hypotheses": {
+                    "H1": "a transient domain-ordering event that briefly improves transport",
+                    "H2": "contact degradation that sets in immediately after the early surge",
+                    "H3": "a delayed defect-feedback process centered on the buried interface",
+                },
+                "experiments": {
+                    "informative": "Measure the transport response with a high-resolution bias-time protocol and structural readout.",
+                    "medium": "Sample transport and interface signatures together across early and mid windows.",
+                    "cheap_weak": "Read one inexpensive proxy signal from the routine wafer monitor.",
+                    "redundant": "Repeat the baseline transport scan with nearly unchanged probe geometry.",
+                    "high_cost_informative": "Profile the stack with a microscopy-plus-bias workflow on the same sample.",
+                },
+            },
+        ),
         "outcomes": {
             "informative": [
                 "The stack shows a brief conductive alignment that quickly relaxes.",
@@ -244,19 +480,53 @@ DOMAIN_LIBRARY = {
     },
     "public_health": {
         "display": "public health",
-        "question": "Which mechanism best explains the short-lived uptake of the community intervention?",
-        "hypotheses": {
-            "H1": "a threshold outreach pulse that briefly changes behavior",
-            "H2": "initial uptake followed by fast operational attrition",
-            "H3": "delayed trust backlash after the first intervention wave",
-        },
-        "experiments": {
-            "informative": "Run a fine-grained follow-up survey linked to delivery and attendance records.",
-            "medium": "Collect paired attendance and sentiment snapshots at moderate cadence.",
-            "cheap_weak": "Use one inexpensive proxy check from a routine administrative dashboard.",
-            "redundant": "Repeat the standard attendance audit with almost the same outreach sites.",
-            "high_cost_informative": "Run a high-cost mixed-methods panel with participant-level follow-up.",
-        },
+        "frames": (
+            {
+                "question": "Which mechanism best explains the short-lived uptake of the community intervention?",
+                "hypotheses": {
+                    "H1": "a threshold outreach pulse that briefly changes behavior",
+                    "H2": "initial uptake followed by fast operational attrition",
+                    "H3": "delayed trust backlash after the first intervention wave",
+                },
+                "experiments": {
+                    "informative": "Run a fine-grained follow-up survey linked to delivery and attendance records.",
+                    "medium": "Collect paired attendance and sentiment snapshots at moderate cadence.",
+                    "cheap_weak": "Use one inexpensive proxy check from a routine administrative dashboard.",
+                    "redundant": "Repeat the standard attendance audit with almost the same outreach sites.",
+                    "high_cost_informative": "Run a high-cost mixed-methods panel with participant-level follow-up.",
+                },
+            },
+            {
+                "question": "What most likely explains the vaccine outreach program's early surge and fast fadeout?",
+                "hypotheses": {
+                    "H1": "a brief outreach pulse that changes behavior only in the first wave",
+                    "H2": "strong initial uptake followed by rapid delivery-system attrition",
+                    "H3": "a delayed trust backlash that appears after early visibility peaks",
+                },
+                "experiments": {
+                    "informative": "Run a dense follow-up study linking outreach exposure, delivery logs, and attendance.",
+                    "medium": "Measure participation and sentiment together at an intermediate cadence.",
+                    "cheap_weak": "Use one low-cost proxy indicator from the routine public-health dashboard.",
+                    "redundant": "Repeat the standard uptake audit on nearly the same outreach locations.",
+                    "high_cost_informative": "Run a high-cost participant panel with linked follow-up interviews.",
+                },
+            },
+            {
+                "question": "Which mechanism best fits the brief adoption bump in the text-reminder program?",
+                "hypotheses": {
+                    "H1": "a threshold reminder pulse that produces only a short-lived behavior shift",
+                    "H2": "early adoption followed by rapid operational drop-off in delivery",
+                    "H3": "a lagged backlash in trust or sentiment after the first reminder wave",
+                },
+                "experiments": {
+                    "informative": "Run a high-resolution follow-up linking reminder exposure, delivery success, and attendance.",
+                    "medium": "Collect paired participation and sentiment snapshots over the rollout window.",
+                    "cheap_weak": "Read one inexpensive proxy from the standing intervention dashboard.",
+                    "redundant": "Repeat the usual attendance review with almost the same participant groups.",
+                    "high_cost_informative": "Run a costly mixed-methods follow-up panel on the same reminder cohort.",
+                },
+            },
+        ),
         "outcomes": {
             "informative": [
                 "Follow-up records show a brief outreach pulse with quick reversion.",
@@ -287,19 +557,53 @@ DOMAIN_LIBRARY = {
     },
     "econ_policy": {
         "display": "econ policy",
-        "question": "Which mechanism best explains the brief improvement and later fadeout in the policy response?",
-        "hypotheses": {
-            "H1": "a threshold expectation pulse that briefly changes firm behavior",
-            "H2": "initial policy uptake followed by rapid implementation friction",
-            "H3": "delayed general-equilibrium feedback that reverses the early gain",
-        },
-        "experiments": {
-            "informative": "Run a high-frequency linked firm-and-price panel across the intervention window.",
-            "medium": "Collect paired compliance and price snapshots at moderate cadence.",
-            "cheap_weak": "Use one inexpensive proxy indicator from the routine macro dashboard.",
-            "redundant": "Repeat the standard compliance audit with nearly identical reporting units.",
-            "high_cost_informative": "Run a high-cost matched microdata panel with firm-level tracking.",
-        },
+        "frames": (
+            {
+                "question": "Which mechanism best explains the brief improvement and later fadeout in the policy response?",
+                "hypotheses": {
+                    "H1": "a threshold expectation pulse that briefly changes firm behavior",
+                    "H2": "initial policy uptake followed by rapid implementation friction",
+                    "H3": "delayed general-equilibrium feedback that reverses the early gain",
+                },
+                "experiments": {
+                    "informative": "Run a high-frequency linked firm-and-price panel across the intervention window.",
+                    "medium": "Collect paired compliance and price snapshots at moderate cadence.",
+                    "cheap_weak": "Use one inexpensive proxy indicator from the routine macro dashboard.",
+                    "redundant": "Repeat the standard compliance audit with nearly identical reporting units.",
+                    "high_cost_informative": "Run a high-cost matched microdata panel with firm-level tracking.",
+                },
+            },
+            {
+                "question": "What most plausibly explains the tax-credit rollout's early gains and later fadeout?",
+                "hypotheses": {
+                    "H1": "a brief expectations pulse that shifts firm behavior only in the first phase",
+                    "H2": "initial uptake followed by fast implementation frictions inside the program",
+                    "H3": "a delayed equilibrium adjustment that unwinds the early improvement",
+                },
+                "experiments": {
+                    "informative": "Run a high-frequency linked panel of firms, compliance, and prices over the rollout window.",
+                    "medium": "Measure compliance and prices together at intermediate cadence.",
+                    "cheap_weak": "Use one inexpensive proxy indicator from the regular macro dashboard.",
+                    "redundant": "Repeat the baseline compliance audit on nearly identical reporting units.",
+                    "high_cost_informative": "Run a matched microdata panel with high-cost firm-level tracking.",
+                },
+            },
+            {
+                "question": "Which account best fits the export-support policy's short bump and later reversal?",
+                "hypotheses": {
+                    "H1": "a threshold expectations pulse that briefly changes planning behavior",
+                    "H2": "initial take-up followed by rapid operational friction in implementation",
+                    "H3": "a lagged general-equilibrium feedback that offsets the early gains",
+                },
+                "experiments": {
+                    "informative": "Measure firms, prices, and compliance in a dense linked panel across the intervention period.",
+                    "medium": "Collect paired compliance and price snapshots through the same window.",
+                    "cheap_weak": "Read one low-cost proxy from the standing macro-policy dashboard.",
+                    "redundant": "Repeat the standard audit with almost unchanged reporting units.",
+                    "high_cost_informative": "Run a high-cost matched panel with firm-level outcome tracking.",
+                },
+            },
+        ),
         "outcomes": {
             "informative": [
                 "The linked panel shows a brief expectation pulse before normalization.",
@@ -332,6 +636,7 @@ DOMAIN_LIBRARY = {
 
 WORDING_BANK = {
     0: {
+        "layout": "sections",
         "header": "Research question",
         "hypotheses": "Candidate hypotheses",
         "prior": "Current prior",
@@ -340,6 +645,7 @@ WORDING_BANK = {
         "experiment_line": "- {exp_id}: {description} Cost={cost:.1f}.",
     },
     1: {
+        "layout": "brief",
         "header": "Open question",
         "hypotheses": "Hypothesis set",
         "prior": "Prior belief state",
@@ -348,6 +654,7 @@ WORDING_BANK = {
         "experiment_line": "- {exp_id}: {description} Estimated cost {cost:.1f}.",
     },
     2: {
+        "layout": "casefile",
         "header": "Decision target",
         "hypotheses": "Working hypotheses",
         "prior": "Bayesian prior",
@@ -356,6 +663,7 @@ WORDING_BANK = {
         "experiment_line": "- {exp_id}: {description} Budget weight {cost:.1f}.",
     },
     3: {
+        "layout": "checklist",
         "header": "Question under study",
         "hypotheses": "Competing explanations",
         "prior": "Starting belief",
@@ -364,6 +672,7 @@ WORDING_BANK = {
         "experiment_line": "- {exp_id}: {description} Cost score {cost:.1f}.",
     },
     4: {
+        "layout": "memo",
         "header": "Mechanism question",
         "hypotheses": "Mechanistic candidates",
         "prior": "Initial posterior guess",
@@ -372,6 +681,7 @@ WORDING_BANK = {
         "experiment_line": "- {exp_id}: {description} Cost index {cost:.1f}.",
     },
     5: {
+        "layout": "dossier",
         "header": "Investigative target",
         "hypotheses": "Named hypotheses",
         "prior": "Belief prior",
@@ -380,6 +690,7 @@ WORDING_BANK = {
         "experiment_line": "- {exp_id}: {description} Cost unit {cost:.1f}.",
     },
     6: {
+        "layout": "sections",
         "header": "Target question",
         "hypotheses": "Possible explanations",
         "prior": "Prior over explanations",
@@ -388,6 +699,7 @@ WORDING_BANK = {
         "experiment_line": "- {exp_id}: {description} Estimated burden {cost:.1f}.",
     },
     7: {
+        "layout": "brief",
         "header": "Mechanism to resolve",
         "hypotheses": "Explanation candidates",
         "prior": "Current hypothesis weights",
@@ -396,6 +708,7 @@ WORDING_BANK = {
         "experiment_line": "- {exp_id}: {description} Cost burden {cost:.1f}.",
     },
     8: {
+        "layout": "casefile",
         "header": "Question to disambiguate",
         "hypotheses": "Alternative accounts",
         "prior": "Prior mass by hypothesis",
@@ -404,6 +717,7 @@ WORDING_BANK = {
         "experiment_line": "- {exp_id}: {description} Estimated cost weight {cost:.1f}.",
     },
     9: {
+        "layout": "memo",
         "header": "Unresolved question",
         "hypotheses": "Competing accounts",
         "prior": "Starting hypothesis distribution",
@@ -425,8 +739,11 @@ class SplitSpec:
     contradiction_rate: float
 
 
-def format_distribution(dist: dict[str, float]) -> str:
-    return ", ".join(f"{key}={dist[key]:.3f}" for key in BELIEF_KEYS)
+def format_distribution(
+    dist: dict[str, float],
+    order: Iterable[str] = BELIEF_KEYS,
+) -> str:
+    return ", ".join(f"{key}={dist[key]:.3f}" for key in order)
 
 
 def normalize(values: Iterable[float]) -> list[float]:
@@ -723,20 +1040,20 @@ def _sample_outcome(
 
 def _render_prompt(
     *,
-    domain_key: str,
+    question: str,
     template_id: int,
     mode: str,
     hypotheses: dict[str, str],
     prior: dict[str, float],
+    hypothesis_display_order: tuple[str, ...],
     experiment_descriptions: dict[str, str],
     passive_initial_observation: str | None,
 ) -> list[dict[str, str]]:
     wording = WORDING_BANK[template_id]
-    domain = DOMAIN_LIBRARY[domain_key]
 
     hypothesis_lines = "\n".join(
         f"- {hypothesis_id}: {hypotheses[hypothesis_id]}"
-        for hypothesis_id in BELIEF_KEYS
+        for hypothesis_id in hypothesis_display_order
     )
     experiment_lines = "\n".join(
         wording["experiment_line"].format(
@@ -752,20 +1069,77 @@ def _render_prompt(
         if mode == ACTIVE_MODE
         else "Passive episode. No experiments can be run. Use only `report_belief`; each non-final report reveals the next fixed observation."
     )
+    label_rule = (
+        "Treat H1, H2, and H3 as episode-local labels. "
+        "Belief reports must use probabilities over H1, H2, H3 that sum to 1."
+    )
     observation_block = ""
     if passive_initial_observation is not None:
         observation_block = f"\nInitial revealed observation:\n- {passive_initial_observation}\n"
+    prior_line = format_distribution(prior, order=hypothesis_display_order)
 
-    prompt = (
-        f"{wording['header']}: {domain['question']}\n\n"
-        f"{wording['hypotheses']}:\n{hypothesis_lines}\n\n"
-        f"{wording['prior']}: {format_distribution(prior)}\n\n"
-        f"{wording['experiments']}:\n{experiment_lines}\n\n"
-        f"{wording['budget']}: {TURN_BUDGET}\n"
-        f"Protocol: {protocol}\n"
-        "Belief reports must use probabilities over H1, H2, H3 that sum to 1."
-        f"{observation_block}"
-    )
+    if wording["layout"] == "sections":
+        prompt = (
+            f"{wording['header']}: {question}\n\n"
+            f"{wording['hypotheses']}:\n{hypothesis_lines}\n\n"
+            f"{wording['prior']}: {prior_line}\n\n"
+            f"{wording['experiments']}:\n{experiment_lines}\n\n"
+            f"{wording['budget']}: {TURN_BUDGET}\n"
+            f"Protocol: {protocol}\n"
+            f"{label_rule}{observation_block}"
+        )
+    elif wording["layout"] == "brief":
+        prompt = (
+            f"{wording['header']}\n"
+            f"Question under review: {question}\n\n"
+            f"{wording['prior']}: {prior_line}\n"
+            f"{wording['budget']}: {TURN_BUDGET}\n\n"
+            f"{wording['hypotheses']}:\n{hypothesis_lines}\n\n"
+            f"{wording['experiments']}:\n{experiment_lines}\n\n"
+            f"Operating rule: {protocol}\n"
+            f"{label_rule}{observation_block}"
+        )
+    elif wording["layout"] == "casefile":
+        prompt = (
+            f"{wording['header']}\n\n"
+            f"Question to resolve\n- {question}\n\n"
+            f"{wording['hypotheses']}\n{hypothesis_lines}\n\n"
+            f"{wording['experiments']}\n{experiment_lines}\n\n"
+            f"{wording['prior']}\n- {prior_line}\n- {wording['budget']}: {TURN_BUDGET}\n\n"
+            f"Protocol\n- {protocol}\n- {label_rule}{observation_block}"
+        )
+    elif wording["layout"] == "checklist":
+        prompt = (
+            f"{wording['header']}: {question}\n\n"
+            "Checklist\n"
+            f"1. Review the candidate labels below.\n{hypothesis_lines}\n\n"
+            f"2. Start from this belief state: {prior_line}\n\n"
+            f"3. Choose from these evidence options.\n{experiment_lines}\n\n"
+            f"4. Respect the {wording['budget'].lower()}: {TURN_BUDGET}\n"
+            f"5. Follow the protocol: {protocol}\n"
+            f"6. {label_rule}{observation_block}"
+        )
+    elif wording["layout"] == "memo":
+        prompt = (
+            f"{wording['header']}\n"
+            f"Focus: {question}\n\n"
+            f"{wording['hypotheses']}:\n{hypothesis_lines}\n\n"
+            f"{wording['experiments']}:\n{experiment_lines}\n\n"
+            "Decision frame\n"
+            f"- {wording['prior']}: {prior_line}\n"
+            f"- {wording['budget']}: {TURN_BUDGET}\n"
+            f"- Protocol: {protocol}\n"
+            f"- {label_rule}{observation_block}"
+        )
+    else:
+        prompt = (
+            f"{wording['header']}\n\n"
+            f"Question\n{question}\n\n"
+            f"{wording['hypotheses']}\n{hypothesis_lines}\n\n"
+            f"{wording['prior']}\n{prior_line}\n\n"
+            f"{wording['experiments']}\n{experiment_lines}\n\n"
+            f"Constraints\n- {wording['budget']}: {TURN_BUDGET}\n- {protocol}\n- {label_rule}{observation_block}"
+        )
     return [{"role": "user", "content": prompt}]
 
 
@@ -781,6 +1155,9 @@ def build_episode(
 ) -> dict:
     rng = np.random.default_rng(episode_seed)
     domain = DOMAIN_LIBRARY[domain_key]
+    frame_bank = domain["frames"]
+    frame_index = episode_seed % len(frame_bank)
+    frame = frame_bank[frame_index]
     for _ in range(4096):
         prior = _sample_prior(rng, split_spec.prior_map_range)
         likelihood_multiplier = float(
@@ -797,16 +1174,10 @@ def build_episode(
             continue
 
         experiment_descriptions = {
-            experiment_id: domain["experiments"][experiment_id]
+            experiment_id: frame["experiments"][experiment_id]
             for experiment_id in EXPERIMENT_IDS
         }
-        observation_bank = {
-            experiment_id: {
-                outcome_id: domain["outcomes"][experiment_id][outcome_index]
-                for outcome_index, outcome_id in enumerate(OUTCOME_IDS)
-            }
-            for experiment_id in EXPERIMENT_IDS
-        }
+        observation_bank = build_observation_bank(rng, domain_key=domain_key)
         active_outcomes = {
             experiment_id: _sample_outcome(
                 rng, likelihoods[experiment_id], true_hypothesis
@@ -855,12 +1226,45 @@ def build_episode(
         passive_initial_observation = (
             reference_plan[0]["observation_text"] if mode == PASSIVE_MODE else None
         )
+        hypothesis_display_to_canonical = build_hypothesis_display_map(rng)
+        hypothesis_canonical_to_display = invert_hypothesis_display_map(
+            hypothesis_display_to_canonical
+        )
+        hypothesis_display_order = build_display_order(rng)
+        visible_hypotheses = remap_hypotheses_to_visible(
+            frame["hypotheses"],
+            hypothesis_display_to_canonical,
+        )
+        visible_prior = remap_distribution_to_visible(
+            prior,
+            hypothesis_display_to_canonical,
+        )
+        visible_reference_trace = [
+            {
+                "step_index": step["step_index"],
+                "source": step["source"],
+                "posterior": remap_distribution_to_visible(
+                    step["posterior"],
+                    hypothesis_display_to_canonical,
+                ),
+            }
+            for step in reference_trace
+        ]
+        visible_passive_plan = []
+        for step in reference_plan:
+            visible_step = dict(step)
+            visible_step["posterior_after"] = remap_distribution_to_visible(
+                step["posterior_after"],
+                hypothesis_display_to_canonical,
+            )
+            visible_passive_plan.append(visible_step)
         prompt = _render_prompt(
-            domain_key=domain_key,
+            question=frame["question"],
             template_id=template_id,
             mode=mode,
-            hypotheses=domain["hypotheses"],
-            prior=prior,
+            hypotheses=visible_hypotheses,
+            prior=visible_prior,
+            hypothesis_display_order=hypothesis_display_order,
             experiment_descriptions=experiment_descriptions,
             passive_initial_observation=passive_initial_observation,
         )
@@ -871,10 +1275,12 @@ def build_episode(
             "mode": mode,
             "domain": domain["display"],
             "domain_key": domain_key,
+            "frame_id": frame_index,
             "template_id": template_id,
-            "question": domain["question"],
-            "hypotheses": domain["hypotheses"],
-            "prior": prior,
+            "question": frame["question"],
+            "hypotheses": visible_hypotheses,
+            "prior": visible_prior,
+            "hypothesis_display_order": list(hypothesis_display_order),
             "visible_experiments": [
                 {
                     "experiment_id": experiment_id,
@@ -884,13 +1290,17 @@ def build_episode(
                 }
                 for experiment_id in EXPERIMENT_IDS
             ],
-            "passive_plan": reference_plan,
+            "passive_plan": visible_passive_plan,
             "passive_initial_observation": passive_initial_observation,
             "active_outcomes": active_outcomes,
             "observation_bank": observation_bank,
-            "reference_trace": reference_trace,
+            "reference_trace": visible_reference_trace,
             "contradiction_metadata": contradiction_metadata,
             "hidden": {
+                "canonical_prior": prior,
+                "canonical_hypotheses": frame["hypotheses"],
+                "hypothesis_display_to_canonical": hypothesis_display_to_canonical,
+                "hypothesis_canonical_to_display": hypothesis_canonical_to_display,
                 "true_hypothesis": true_hypothesis,
                 "likelihoods": likelihoods,
                 "likelihood_multiplier": likelihood_multiplier,
