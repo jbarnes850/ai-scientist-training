@@ -5,24 +5,24 @@
       "avg_metrics": {
         "contradiction_episode": 0.1875,
         "experiment_turns": 1.96875,
-        "extra_turn_penalty_total": -0.046874999999999896,
-        "final_map_bonus": 0.1513671875,
-        "final_map_correct": 0.60546875,
-        "invalid_belief_penalty_total": 0.0,
-        "malformed_action_penalty_total": -0.0234375,
-        "mean_brier": 0.1869701958358842,
-        "mean_calibration_reward": -0.1869701958358842,
-        "mean_experiment_reward": -0.038135735016483596,
-        "mean_regret": 0.038135735016483596,
-        "num_turns": 5.0625,
-        "report_belief_calls": 3.0,
-        "run_experiment_calls": 2.0625,
-        "total_reward_reconstructed": -0.14405124335236796,
-        "total_tool_calls": 5.0625,
+        "extra_turn_penalty_total": -0.023632812499999968,
+        "final_map_bonus": 0.1640625,
+        "final_map_correct": 0.65625,
+        "invalid_belief_penalty_total": -0.001953125,
+        "malformed_action_penalty_total": 0.0,
+        "mean_brier": 0.13865834547321693,
+        "mean_calibration_reward": -0.13865834547321693,
+        "mean_experiment_reward": -0.08566543547002141,
+        "mean_regret": 0.08566543547002141,
+        "num_turns": 4.97265625,
+        "report_belief_calls": 3.00390625,
+        "run_experiment_calls": 1.96875,
+        "total_reward_reconstructed": -0.08584721844323823,
+        "total_tool_calls": 4.97265625,
         "unused_budget": 1.03125,
-        "valid_belief_reports": 3.0
+        "valid_belief_reports": 2.99609375
       },
-      "avg_reward": -0.14405124335236796,
+      "avg_reward": -0.08584721844323823,
       "base_url": "https://api.pinference.ai/api/v1",
       "env_args": {
         "eval_max_examples": null,
@@ -60,7 +60,7 @@
         "trajectory_log",
         "posterior_trace"
       ],
-      "time_ms": 157213.06228637695,
+      "time_ms": 165713.79399299622,
       "tools": [
         {
           "description": "",
@@ -70,11 +70,11 @@
             "properties": {
               "experiment_id": {
                 "enum": [
-                  "informative",
-                  "medium",
-                  "cheap_weak",
-                  "redundant",
-                  "high_cost_informative"
+                  "Experiment_A",
+                  "Experiment_B",
+                  "Experiment_C",
+                  "Experiment_D",
+                  "Experiment_E"
                 ],
                 "title": "Experiment Id",
                 "type": "string"
@@ -139,29 +139,29 @@
         }
       ],
       "usage": {
-        "input_tokens": 4056.71484375,
-        "output_tokens": 185.390625
+        "input_tokens": 3962.93359375,
+        "output_tokens": 184.94140625
       },
       "version_info": {
-        "env_commit": "2dd813cae11a477e2be6e060b3badef7bb0e217c",
+        "env_commit": "f71525d74145dc446b7e6e894cd3d4dbe6d7fac4",
         "env_version": "0.1.0",
-        "vf_commit": "2dd813cae11a477e2be6e060b3badef7bb0e217c",
+        "vf_commit": "f71525d74145dc446b7e6e894cd3d4dbe6d7fac4",
         "vf_version": "0.1.11"
       }
     },
-    "results_path": "/Users/jarrodbarnes/ai-scientist-training/environments/epistemic_taste/outputs/evals/epistemic-taste--Qwen--Qwen3-30B-A3B-Instruct-2507/6ae3ab9e",
+    "results_path": "/Users/jarrodbarnes/ai-scientist-training/environments/epistemic_taste/outputs/evals/epistemic-taste--Qwen--Qwen3-30B-A3B-Instruct-2507/adb9ad74",
     "summary": {
-      "extra_turn_penalty_total": -0.046874999999999896,
-      "final_map_correct": 0.60546875,
-      "invalid_belief_penalty_total": 0.0,
-      "malformed_action_penalty_total": -0.0234375,
-      "mean_brier": 0.1869701958358842,
-      "mean_calibration_reward": -0.1869701958358842,
-      "mean_experiment_reward": -0.038135735016483596,
-      "mean_regret": 0.038135735016483596,
+      "extra_turn_penalty_total": -0.023632812499999968,
+      "final_map_correct": 0.65625,
+      "invalid_belief_penalty_total": -0.001953125,
+      "malformed_action_penalty_total": 0.0,
+      "mean_brier": 0.13865834547321693,
+      "mean_calibration_reward": -0.13865834547321693,
+      "mean_experiment_reward": -0.08566543547002141,
+      "mean_regret": 0.08566543547002141,
       "num_rows": 256,
-      "num_turns": 5.0625,
-      "reward": -0.14405124335236796
+      "num_turns": 4.97265625,
+      "reward": -0.08584721844323823
     }
   },
   "heuristics": {

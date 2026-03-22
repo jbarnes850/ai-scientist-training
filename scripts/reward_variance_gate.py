@@ -10,7 +10,6 @@ DEFAULT_AXES = [
     "reward",
     "mean_experiment_reward",
     "mean_calibration_reward",
-    "final_map_correct",
 ]
 
 

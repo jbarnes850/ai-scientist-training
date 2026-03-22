@@ -42,6 +42,76 @@ EXPERIMENT_TYPES = {
     "high_cost_informative": "high_cost_informative",
 }
 
+OPAQUE_LABELS = (
+    "Experiment_A",
+    "Experiment_B",
+    "Experiment_C",
+    "Experiment_D",
+    "Experiment_E",
+)
+
+
+def build_alias_map(rng: np.random.Generator) -> dict[str, str]:
+    """Return {opaque_label: canonical_id} with shuffled assignment."""
+    canonical = list(EXPERIMENT_IDS)
+    rng.shuffle(canonical)
+    return dict(zip(OPAQUE_LABELS, canonical))
+
+
+def invert_alias_map(alias_map: dict[str, str]) -> dict[str, str]:
+    """Return {canonical_id: opaque_label}."""
+    return {v: k for k, v in alias_map.items()}
+
+
+def rewrite_prompt_with_aliases(
+    prompt_messages: list,
+    alias_map: dict[str, str],
+) -> list:
+    """Replace canonical experiment IDs with opaque labels and reorder.
+
+    Works with both plain dicts and Pydantic message objects (UserMessage).
+    """
+    import copy
+
+    new_messages = copy.deepcopy(prompt_messages)
+
+    for msg in new_messages:
+        if msg.get("role") != "user":
+            continue
+        content = msg["content"] if isinstance(msg, dict) else msg.content
+        if not isinstance(content, str):
+            continue
+        lines = content.split("\n")
+        experiment_indices: list[int] = []
+        experiment_lines_by_canonical: dict[str, str] = {}
+        for i, line in enumerate(lines):
+            for cid in EXPERIMENT_IDS:
+                if line.startswith(f"- {cid}:"):
+                    experiment_indices.append(i)
+                    experiment_lines_by_canonical[cid] = line
+                    break
+
+        if len(experiment_lines_by_canonical) != len(EXPERIMENT_IDS):
+            continue
+
+        reordered: list[str] = []
+        for opaque_label in OPAQUE_LABELS:
+            canonical_id = alias_map[opaque_label]
+            original_line = experiment_lines_by_canonical[canonical_id]
+            new_line = original_line.replace(f"- {canonical_id}:", f"- {opaque_label}:", 1)
+            reordered.append(new_line)
+
+        for idx, new_line in zip(experiment_indices, reordered):
+            lines[idx] = new_line
+        new_content = "\n".join(lines)
+        if isinstance(msg, dict):
+            msg["content"] = new_content
+        else:
+            msg.content = new_content
+
+    return new_messages
+
+
 DOMAIN_LIBRARY = {
     "cell_signaling": {
         "display": "cell signaling",

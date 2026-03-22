@@ -1,7 +1,9 @@
+import copy
 import json
 from pathlib import Path
 from typing import Literal, cast
 
+import numpy as np
 from pydantic import BaseModel
 import verifiers as vf
 from verifiers.types import State, ToolMessage
@@ -12,9 +14,13 @@ from .bayes import (
     EPISODE_VERSION,
     EXPERIMENT_IDS,
     MALFORMED_ACTION_PENALTY,
+    OPAQUE_LABELS,
     TURN_BUDGET,
     apply_observation,
+    build_alias_map,
     compute_episode_summary,
+    invert_alias_map,
+    rewrite_prompt_with_aliases,
     utility_map_for_state,
 )
 from .dataset import build_dataset, ensure_frozen_dataset
@@ -30,6 +36,20 @@ class BeliefVector(BaseModel):
     H1: float
     H2: float
     H3: float
+
+
+def _rewrite_tool_defs_with_aliases(
+    tool_defs: list,
+    alias_map: dict[str, str],
+) -> list:
+    """Deep-copy tool_defs and replace run_experiment enum with opaque labels."""
+    new_defs = copy.deepcopy(tool_defs)
+    for td in new_defs:
+        if td.get("name") == "run_experiment":
+            props = td.get("parameters", {}).get("properties", {})
+            if "experiment_id" in props:
+                props["experiment_id"]["enum"] = list(OPAQUE_LABELS)
+    return new_defs
 
 
 class EpistemicTasteEnv(vf.StatefulToolEnv):
@@ -142,6 +162,17 @@ class EpistemicTasteEnv(vf.StatefulToolEnv):
                     "posterior_after": dict(state["current_posterior"]),
                 }
             )
+        # -- Presentation perturbation: opaque labels + order shuffle --
+        trajectory_seed = int(state["trajectory_id"][:16], 16)
+        perturb_rng = np.random.default_rng(trajectory_seed)
+        alias_map = build_alias_map(perturb_rng)
+        state["alias_map"] = alias_map
+        state["reverse_alias_map"] = invert_alias_map(alias_map)
+        state["prompt"] = rewrite_prompt_with_aliases(state["prompt"], alias_map)
+        state["tool_defs"] = _rewrite_tool_defs_with_aliases(
+            state["tool_defs"], alias_map
+        )
+
         return state
 
     def update_tool_args(
@@ -153,6 +184,11 @@ class EpistemicTasteEnv(vf.StatefulToolEnv):
         **kwargs,
     ) -> dict:
         tool_args["state"] = state
+        if tool_name == "run_experiment" and "experiment_id" in tool_args:
+            alias_map = state.get("alias_map", {})
+            raw_id = tool_args["experiment_id"]
+            if raw_id in alias_map:
+                tool_args["experiment_id"] = alias_map[raw_id]
         return tool_args
 
     def _append_reward_event(
@@ -277,7 +313,8 @@ class EpistemicTasteEnv(vf.StatefulToolEnv):
                 reason="experiment_unavailable",
                 details={"experiment_id": experiment_id},
             )
-            return f"Experiment `{experiment_id}` is unavailable or already used."
+            display_id = state.get("reverse_alias_map", {}).get(experiment_id, experiment_id)
+            return f"Experiment `{display_id}` is unavailable or already used."
 
         if state["used_experiments"] and max(current_posterior.values()) >= 0.85:
             self._append_reward_event(
@@ -338,8 +375,9 @@ class EpistemicTasteEnv(vf.StatefulToolEnv):
                 "latest_experiment_reward": experiment_reward,
             },
         )
+        display_id = state.get("reverse_alias_map", {}).get(experiment_id, experiment_id)
         return (
-            f"Observation from `{experiment_id}`: {observation_text}\n"
+            f"Observation from `{display_id}`: {observation_text}\n"
             f"Current evidence turns used: {len(state['used_experiments'])}/{TURN_BUDGET}.\n"
             "Now call `report_belief` with your updated probabilities."
         )
@@ -430,7 +468,10 @@ class EpistemicTasteEnv(vf.StatefulToolEnv):
                     }
                 ]
                 return "Belief recorded. Evidence budget exhausted."
-            remaining = ", ".join(state["available_experiments"])
+            reverse_map = state.get("reverse_alias_map", {})
+            remaining = ", ".join(
+                reverse_map.get(eid, eid) for eid in state["available_experiments"]
+            )
             return (
                 "Belief recorded. Choose one remaining experiment next.\n"
                 f"Remaining experiments: {remaining}."
