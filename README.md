@@ -87,20 +87,13 @@ cd /Users/jarrodbarnes/ai-scientist-training
 
 ## Hosted Prime RL
 
-The hosted config lives at `configs/epistemic_taste_grpo.toml`.
+The hosted config lives at `configs/epistemic_taste_grpo.toml` and now points at the published environment ID `jbarnes850/epistemic-taste`.
 
-Before pushing the environment or launching hosted training, replace the placeholder owner in the config:
-
-```toml
-[[env]]
-id = "owner-slug/epistemic-taste"
-```
-
-Then publish and run:
+Publish a new version and run hosted training:
 
 ```bash
 cd /Users/jarrodbarnes/ai-scientist-training
-prime env push epistemic-taste -p ./environments -o <owner-slug>
+prime env push epistemic-taste -p ./environments -o jbarnes850
 prime rl run configs/epistemic_taste_grpo.toml
 ```
 
