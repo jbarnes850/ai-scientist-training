@@ -16,6 +16,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build]
 include = [
+    "epistemic_taste/**/*.py",
     "research_hypothesis_analysis/**/*.py",
     "research_hypothesis_analysis/data/*.json",
     "research_hypothesis_analysis/data/*.jsonl",
@@ -24,10 +25,11 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["research_hypothesis_analysis"]
+packages = ["epistemic_taste", "research_hypothesis_analysis"]
 
 [tool.hatch.build.targets.sdist]
 include = [
+    "epistemic_taste/**/*.py",
     "research_hypothesis_analysis/**/*.py",
     "research_hypothesis_analysis/data/*.json",
     "research_hypothesis_analysis/data/*.jsonl",

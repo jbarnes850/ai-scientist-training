@@ -9,6 +9,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import numpy as np  # noqa: E402
+import epistemic_taste  # noqa: E402
 
 from research_hypothesis_analysis.bayes import (  # noqa: E402
     ACTIVE_MODE,
@@ -104,6 +105,9 @@ class EnvironmentTests(unittest.TestCase):
         self.assertIsNotNone(
             validate_belief_payload({"H1": 0.2, "H2": 0.3, "H3": 0.7})
         )
+
+    def test_epistemic_taste_alias_exports_loader(self) -> None:
+        self.assertTrue(callable(epistemic_taste.load_environment))
 
 
 class PresentationPerturbationTests(unittest.TestCase):
